@@ -16,12 +16,21 @@ term.open(termElement);
 term.focus();
 fitAddon.fit();
 
+term.onResize(({ cols, rows }) => {
+  const text = `${cols},${rows}`;
+  const bytes = new TextEncoder().encode(text);
+  const pkt = new Uint8Array(1 + bytes.length);
+  pkt[0] = 0xff;
+  pkt.set(bytes, 1);
+  ws.send(pkt);
+});
+
 ws.addEventListener("open", () => {
   const cols = term.cols;
   const rows = term.rows;
-  const text  = `${cols},${rows}`;
+  const text = `${cols},${rows}`;
   const bytes = new TextEncoder().encode(text);
-  const pkt   = new Uint8Array(1 + bytes.length);
+  const pkt = new Uint8Array(1 + bytes.length);
   pkt[0] = 0xff;          // resize opcode
   pkt.set(bytes, 1);
   ws.send(pkt);           // 🔥 FIRST HANDSHAKE
@@ -31,12 +40,4 @@ ws.addEventListener("open", () => {
 window.addEventListener("resize", () => {
   // Send resize packet to server
   fitAddon.fit();
-  const cols = term.cols;
-  const rows = term.rows;
-  const text = `${cols},${rows}`;
-  const bytes = new TextEncoder().encode(text);  // UTF-8 bytes for "80,24"
-  const packet = new Uint8Array(1 + bytes.length);
-  packet[0] = 0xff;           // message type
-  packet.set(bytes, 1);
-  ws.send(packet);
 });
